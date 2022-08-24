@@ -1,0 +1,20 @@
+# For more information about the available options please visit: http://go/backstage (VPN required)
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  annotations:
+    github.com/project-slug: Unity-Technologies/asset-store-toools
+  name: asset-store-toools
+  description: "With these tools, you can prepare, validate, and package your assets for submission through publisher.unity.com."
+  labels:
+    costcenter: "2043"
+  tags:
+    - planned-public
+  links:
+    - url: https://unity.slack.com/messages/CJ9QGCHFF/
+      title: "#ask-vs"
+      icon: chat
+spec:
+  type: unity-package
+  lifecycle: production
+  owner: unity-technologies/vsp-qa
