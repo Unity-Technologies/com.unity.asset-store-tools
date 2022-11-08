@@ -3,8 +3,8 @@ apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
   annotations:
-    github.com/project-slug: Unity-Technologies/asset-store-toools
-  name: asset-store-toools
+    github.com/project-slug: Unity-Technologies/asset-store-tools
+  name: asset-store-tools
   description: "With these tools, you can prepare, validate, and package your assets for submission through publisher.unity.com."
   labels:
     costcenter: "2043"

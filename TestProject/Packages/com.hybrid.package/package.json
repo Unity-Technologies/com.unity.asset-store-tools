@@ -1,0 +1,8 @@
+{
+  "name": "com.hybrid.package",
+  "displayName": "Hybrid Test Package",
+  "version": "1.0.0",
+  "unity": "2019.4",
+  "description": "This is a test",
+  "type": "tool"
+}
