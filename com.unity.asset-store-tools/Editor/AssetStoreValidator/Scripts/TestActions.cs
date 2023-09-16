@@ -8,7 +8,11 @@ using System.Threading.Tasks;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+#if UNITY_2023_1_OR_NEWER
+using UnityEngine.Rendering;
+#else
 using UnityEngine.Experimental.Rendering;
+#endif
 using UnityEngine.SceneManagement;
 using CompilationPipeline = UnityEditor.Compilation.CompilationPipeline;
 using Object = UnityEngine.Object;
