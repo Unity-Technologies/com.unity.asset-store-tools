@@ -1,6 +1,44 @@
 # Changelog
 All notable changes to this package will be documented in this file.
 
+## [11.3.0] - 2023-07-04
+
+### Uploader Changes
+
+- Added the option to validate a pre-exported package
+- Added the option to export a .unitypackage file without uploading
+- Updated the dependency selection UI
+
+### Validator Changes
+
+- Added the option to validate several asset paths at once
+    - Note: when validating package that is comprised of several folders (e.g. Assets/MyPackage + 
+	Assets/StreamingAssets + Assets/WebGLTemplates), please select all applicable paths that would be included in the package
+- Added several new validation tests for:
+    - File Menu Names
+	- Compressed files 
+	- Model Types
+	- Texture Dimensions
+	- Particle Systems
+	- Normal Map Textures
+    - Audio Clipping
+    - Path Lengths
+    - Script Compilation	
+- Updated validation test severities based on package category
+- Updated validation tests to each have their own test logic class
+- Updated validation tests to be displayed in alphabetical order
+- Fixed several issues with the namespace check test
+- Fixed scenes in Samples~ folders not being taken into account for the sample scene check test
+- Other internal changes
+
+### Exporter Changes
+
+- Package exporter is now a separate module (similar to Uploader and Validator)
+- Fixed hidden folders being included when exporting package content
+    - Note: this prevents an issue with the Unity Editor, where exported hidden folders would appear in the Project window 
+	as empty folders when imported, despite having content on disk. Content nested within hidden folders is still collected, 
+	provided it contains unique .meta files
+
 ## [11.2.2] - 2023-02-23
 
 ### Validator Changes

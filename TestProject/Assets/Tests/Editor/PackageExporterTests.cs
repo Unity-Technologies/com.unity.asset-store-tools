@@ -5,13 +5,10 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using NUnit.Framework;
-using AssetStoreTools.Uploader;
 using UnityEditor;
 using UnityEngine.TestTools;
-using UnityEditor.SceneManagement;
-using UnityEngine;
-using Debug = System.Diagnostics.Debug;
 using AssetStoreTools.Utility.Json;
+using AssetStoreTools.Exporter;
 
 namespace Tests.Editor
 {
@@ -289,7 +286,13 @@ namespace Tests.Editor
             var exportPaths = MultiPackagePathInProject;
             var outputPath = Path.Combine(CachePath, "Actual.unitypackage");
 
-            var exportTask = PackageExporter.ExportPackage(exportPaths, outputPath, false, false, true);
+            var settings = new NativeExporterSettings()
+            {
+                ExportPaths = exportPaths,
+                OutputFilename = outputPath,
+                IncludeDependencies = false
+            };
+            var exportTask = PackageExporter.ExportPackage(settings);
 
             while (!exportTask.IsCompleted)
                 yield return null;
@@ -311,9 +314,20 @@ namespace Tests.Editor
         public IEnumerator ExportPackage_Native_ManifestAndProjectSettings()
         {
             var exportPaths = MultiPackagePathInProject;
+            var tempArray = new string[exportPaths.Length + 1];
+            Array.Copy(exportPaths, tempArray, exportPaths.Length);
+            tempArray[tempArray.Length - 1] = "ProjectSettings";
+            exportPaths = tempArray;
+
             var outputPath = Path.Combine(CachePath, "Actual.unitypackage");
 
-            var exportTask = PackageExporter.ExportPackage(exportPaths, outputPath, true, true, true);
+            var settings = new NativeExporterSettings()
+            {
+                ExportPaths = exportPaths,
+                OutputFilename = outputPath,
+                IncludeDependencies = true
+            };
+            var exportTask = PackageExporter.ExportPackage(settings);
 
             while (!exportTask.IsCompleted)
                 yield return null;
@@ -337,24 +351,54 @@ namespace Tests.Editor
             var exportPaths = new string[0];
             var outputPath = Path.Combine(CachePath, "Actual.unitypackage");
 
-            var exportTask = PackageExporter.ExportPackage(exportPaths, outputPath, false, false, true);
+            // Empty export path check
+            var settings = new NativeExporterSettings()
+            {
+                ExportPaths = exportPaths,
+                OutputFilename = outputPath,
+                IncludeDependencies = false
+            };
+            var exportTask = PackageExporter.ExportPackage(settings);
 
             while (!exportTask.IsCompleted)
                 yield return null;
 
             var result = exportTask.Result;
-
             Assert.IsFalse(result.Success);
 
-            exportPaths = new string[] { "This/Path/Does/Not/Exist" };
 
-            exportTask = PackageExporter.ExportPackage(exportPaths, outputPath, false, false, true);
+            // Non-existent export path check
+            settings.ExportPaths = new string[] { "This/Path/Does/Not/Exist" };
+            exportTask = PackageExporter.ExportPackage(settings);
 
             while (!exportTask.IsCompleted)
                 yield return null;
 
             result = exportTask.Result;
+            Assert.IsFalse(result.Success);
 
+
+            // Empty output path check
+            settings.ExportPaths = MultiPackagePathInProject;
+            settings.OutputFilename = string.Empty;
+            exportTask = PackageExporter.ExportPackage(settings);
+
+            while (!exportTask.IsCompleted)
+                yield return null;
+
+            result = exportTask.Result;
+            Assert.IsFalse(result.Success);
+
+
+            // Null output path check
+            settings.ExportPaths = MultiPackagePathInProject;
+            settings.OutputFilename = null;
+            exportTask = PackageExporter.ExportPackage(settings);
+
+            while (!exportTask.IsCompleted)
+                yield return null;
+
+            result = exportTask.Result;
             Assert.IsFalse(result.Success);
         }
 
@@ -364,7 +408,12 @@ namespace Tests.Editor
             var exportPaths = MultiPackagePathInProject;
             var outputPath = Path.Combine(CachePath, "Actual.unitypackage");
 
-            var exportTask = PackageExporter.ExportPackage(exportPaths, outputPath, false, false, false);
+            var settings = new CustomExporterSettings()
+            {
+                ExportPaths = exportPaths,
+                OutputFilename = outputPath
+            };
+            var exportTask = PackageExporter.ExportPackage(settings);
 
             while (!exportTask.IsCompleted)
                 yield return null;
@@ -388,7 +437,18 @@ namespace Tests.Editor
             var exportPaths = MultiPackagePathInProject;
             var outputPath = Path.Combine(CachePath, "Actual.unitypackage");
 
-            var exportTask = PackageExporter.ExportPackage(exportPaths, outputPath, true, true, false, PackmanDependencies);
+            var tempArray = new string[exportPaths.Length + 1];
+            Array.Copy(exportPaths, tempArray, exportPaths.Length);
+            tempArray[tempArray.Length - 1] = "ProjectSettings";
+            exportPaths = tempArray;
+
+            var settings = new CustomExporterSettings()
+            {
+                ExportPaths = exportPaths,
+                OutputFilename = outputPath,
+                Dependencies = PackmanDependencies
+            };
+            var exportTask = PackageExporter.ExportPackage(settings);
 
             while (!exportTask.IsCompleted)
                 yield return null;
@@ -419,24 +479,55 @@ namespace Tests.Editor
             var exportPaths = new string[0];
             var outputPath = Path.Combine(CachePath, "Actual.unitypackage");
 
-            var exportTask = PackageExporter.ExportPackage(exportPaths, outputPath, false, false, false);
+            // Empty export path check
+            var settings = new CustomExporterSettings()
+            {
+                ExportPaths = exportPaths,
+                OutputFilename = outputPath,
+            };
+            var exportTask = PackageExporter.ExportPackage(settings);
 
             while (!exportTask.IsCompleted)
                 yield return null;
 
             var result = exportTask.Result;
-
             Assert.IsFalse(result.Success);
 
+
+            // Non-existent export path check
             exportPaths = new string[] { "This/Path/Does/Not/Exist" };
 
-            exportTask = PackageExporter.ExportPackage(exportPaths, outputPath, false, false, false);
+            settings.ExportPaths = exportPaths;
+            exportTask = PackageExporter.ExportPackage(settings);
 
             while (!exportTask.IsCompleted)
                 yield return null;
 
             result = exportTask.Result;
+            Assert.IsFalse(result.Success);
 
+
+            // Empty output path check
+            settings.ExportPaths = MultiPackagePathInProject;
+            settings.OutputFilename = string.Empty;
+            exportTask = PackageExporter.ExportPackage(settings);
+
+            while (!exportTask.IsCompleted)
+                yield return null;
+
+            result = exportTask.Result;
+            Assert.IsFalse(result.Success);
+
+
+            // Null output path check
+            settings.ExportPaths = MultiPackagePathInProject;
+            settings.OutputFilename = null;
+            exportTask = PackageExporter.ExportPackage(settings);
+
+            while (!exportTask.IsCompleted)
+                yield return null;
+
+            result = exportTask.Result;
             Assert.IsFalse(result.Success);
         }
 
@@ -446,7 +537,12 @@ namespace Tests.Editor
             var exportPaths = HybridPackagePathInProject;
             var outputPath = Path.Combine(CachePath, "Actual.unitypackage");
 
-            var exportTask = PackageExporter.ExportPackage(exportPaths, outputPath, false, false, false);
+            var settings = new CustomExporterSettings()
+            {
+                ExportPaths = exportPaths,
+                OutputFilename = outputPath,
+            };
+            var exportTask = PackageExporter.ExportPackage(settings);
 
             while (!exportTask.IsCompleted)
                 yield return null;
