@@ -2,6 +2,7 @@ using AssetStoreTools.Validator.Data;
 using AssetStoreTools.Validator.TestDefinitions;
 using AssetStoreTools.Validator.TestMethods.Utility;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 
 namespace AssetStoreTools.Validator.TestMethods
@@ -18,6 +19,13 @@ namespace AssetStoreTools.Validator.TestMethods
             foreach (var texture in textures)
             {
                 if (Mathf.IsPowerOfTwo(texture.width) && Mathf.IsPowerOfTwo(texture.height))
+                    continue;
+
+                var importer = AssetUtility.GetAssetImporter(AssetUtility.ObjectToAssetPath(texture));
+
+                if (importer == null || !(importer is TextureImporter textureImporter)
+                    || textureImporter.textureType == TextureImporterType.Sprite
+                    || textureImporter.textureType == TextureImporterType.GUI)
                     continue;
 
                 badTextures.Add(texture);

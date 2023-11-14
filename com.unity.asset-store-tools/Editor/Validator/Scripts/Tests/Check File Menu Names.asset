@@ -17,7 +17,7 @@ MonoBehaviour:
   Title: Check File Menu Names
   Description: File menus should be placed under an existing menu, such as "Window/<PackageName>".
     If no existing menus are a good fit, they should be placed under a custom menu
-    called "Tools"
+    called "Tools".
   CategoryInfo:
     IsFailFilter: 1
     IsInclusiveFilter: 1

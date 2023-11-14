@@ -21,8 +21,8 @@ MonoBehaviour:
     for other Asset Store products, or alternative render pipeline content\n\n.zip
     files are acceptable if they are compressing files that do not natively function
     in the Unity Editor. (For example, Blender, HTML Documentation, or Visual Studio
-    Projects)\r. Such files should include 'source' in the file name (e.g. \"Blender_source.zip\"
-    or \"PSDSource.zip\")"
+    Projects). Such files should include 'source' in the file name (e.g. \"Blender_source.zip\"
+    or \"PSDSource.zip\")."
   CategoryInfo:
     IsFailFilter: 1
     IsInclusiveFilter: 1

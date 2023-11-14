@@ -21,7 +21,7 @@ MonoBehaviour:
     - LOD Mesh must be referenced by an LOD Group Component
 
     -
-    LOD Mesh GameObject must be a child of an LOD Group Component'
+    LOD Mesh GameObject must be a child of an LOD Group Component.'
   CategoryInfo:
     IsFailFilter: 1
     IsInclusiveFilter: 1

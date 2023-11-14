@@ -49,7 +49,9 @@ namespace AssetStoreTools.Utility
         {
             var packages = GetAllPackages();
             var registryPackages = packages.Where(x => x.source == PackageSource.Registry || x.source == PackageSource.BuiltIn)
-                .Where(x => x.isDirectDependency).ToArray();
+                .OrderBy(x => string.Compare(x.type, "module", System.StringComparison.OrdinalIgnoreCase) == 0)
+                .ThenBy(x => x.name).ToArray();
+
             return registryPackages;
         }
     }

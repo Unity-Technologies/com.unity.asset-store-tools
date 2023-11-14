@@ -15,7 +15,6 @@ namespace AssetStoreTools.Exporter
     internal class PackageExporterDefault : PackageExporter
     {
         private const string TemporaryExportPathName = "CustomExport";
-        private const string ManifestJsonPath = "Packages/manifest.json";
 
         private DefaultExporterSettings _exportSettings;
 
@@ -123,36 +122,31 @@ namespace AssetStoreTools.Exporter
             if (_exportSettings.Dependencies == null || _exportSettings.Dependencies.Length == 0)
                 return;
 
-            var manifestJson = GetPackageManifestJson();
-            var allDependenciesDict = manifestJson["dependencies"].AsDict();
-
-            var allLocalPackages = PackageUtility.GetAllLocalPackages();
-            List<string> allPackagesList = new List<string>(allDependenciesDict.Keys);
-
-            foreach (var package in allPackagesList)
+            var exportDependenciesDict = JsonValue.NewDict();
+            var allRegistryPackages = PackageUtility.GetAllRegistryPackages();
+            
+            foreach(var exportDependency in _exportSettings.Dependencies)
             {
-                if (!_exportSettings.Dependencies.Any(x => x == package))
+                var registryPackage = allRegistryPackages.FirstOrDefault(x => x.name == exportDependency);
+                if (registryPackage == null)
                 {
-                    allDependenciesDict.Remove(package);
+                    // Package is either not from a registry source or does not exist in the project
+                    UnityEngine.Debug.LogWarning($"Found an unsupported Package Manager dependency: {exportDependency}.\n" +
+                                             "This dependency is not supported in the project's manifest.json and will be skipped.");
                     continue;
                 }
 
-                if (!allLocalPackages.Select(x => x.name).Contains(package))
-                    continue;
-
-                allDependenciesDict.Remove(package);
-                UnityEngine.Debug.LogWarning($"Found an unsupported Package Manager dependency: {package}.\n" +
-                                             "This dependency is not supported in the project's manifest.json and will be skipped.");
+                exportDependenciesDict[registryPackage.name] = registryPackage.version;
             }
 
-            if (allDependenciesDict.Count == 0)
-                return;
+            var exportManifestJson = JsonValue.NewDict();
+            exportManifestJson["dependencies"] = exportDependenciesDict;
 
             var tempManifestDirectoryPath = $"{tempOutputPath}/packagemanagermanifest";
             Directory.CreateDirectory(tempManifestDirectoryPath);
             var tempManifestFilePath = $"{tempManifestDirectoryPath}/asset";
 
-            File.WriteAllText(tempManifestFilePath, manifestJson.ToString());
+            File.WriteAllText(tempManifestFilePath, exportManifestJson.ToString());
         }
 
         private Dictionary<string, string> GetPathGuidPairs(string[] exportPaths)
@@ -313,15 +307,6 @@ namespace AssetStoreTools.Exporter
                 process.WaitForExit();
                 return process.ExitCode;
             }
-        }
-
-        private JsonValue GetPackageManifestJson()
-        {
-            string manifestJsonString = File.ReadAllText(ManifestJsonPath);
-            JSONParser parser = new JSONParser(manifestJsonString);
-            var manifestJson = parser.Parse();
-
-            return manifestJson;
         }
 
         protected override void PostExportCleanup()

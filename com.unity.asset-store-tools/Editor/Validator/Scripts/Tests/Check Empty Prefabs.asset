@@ -15,7 +15,7 @@ MonoBehaviour:
   HasBeenInitialized: 1
   Id: 5
   Title: Check Empty Prefabs
-  Description: Prefabs cannot be empty, please make sure that you set up your prefabs
+  Description: Prefabs cannot be empty, please make sure that you set up your prefabs.
     correctly.
   CategoryInfo:
     IsFailFilter: 1

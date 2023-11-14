@@ -15,7 +15,7 @@ MonoBehaviour:
   HasBeenInitialized: 1
   Id: 23
   Title: Check Model Types
-  Description: Mesh assets must be either .fbx, .dae, .abc, or .obj file types
+  Description: Mesh assets must be either .fbx, .dae, .abc, or .obj file types.
   CategoryInfo:
     IsFailFilter: 0
     IsInclusiveFilter: 1

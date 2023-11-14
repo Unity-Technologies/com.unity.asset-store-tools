@@ -79,6 +79,11 @@ namespace AssetStoreTools.Exporter
             if (assetPath.EndsWith("~"))
                 return string.Empty;
 
+            // Skip ProjectVersion.txt file specifically as it may introduce
+            // project compatibility issues when imported
+            if (string.Compare(assetPath, "ProjectSettings/ProjectVersion.txt", StringComparison.OrdinalIgnoreCase) == 0)
+                return string.Empty;
+
             // Attempt retrieving guid from the Asset Database first
             var guid = AssetDatabase.AssetPathToGUID(assetPath);
             if (guid != string.Empty)

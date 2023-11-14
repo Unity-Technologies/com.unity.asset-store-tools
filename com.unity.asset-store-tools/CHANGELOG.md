@@ -1,6 +1,17 @@
 # Changelog
 All notable changes to this package will be documented in this file.
 
+## [11.3.1] - 2023-08-14
+
+### Uploader Changes
+- Added the option to select indirect package dependencies from the project (e.g. Mathematics package installed by the Burst package)
+
+### Validator Changes
+- Updated the Texture Dimensions test to ignore 'Sprite' and 'Editor GUI' texture types
+
+### Exporter Changes
+- Updated exporter to ignore the 'ProjectSettings/ProjectVersion.txt' asset when exporting 'Complete Project' category packages
+
 ## [11.3.0] - 2023-07-04
 
 ### Uploader Changes
