@@ -19,7 +19,8 @@ namespace AssetStoreTools.Uploader
     /// </summary>
     internal static class AssetStoreAPI
     {
-        public const string ToolVersion = "V6.2.1";
+        public const string ToolVersion = "V6.2.2";
+
         private const string UnauthSessionId = "26c4202eb475d02864b40827dfff11a14657aa41";
         private const string KharmaSessionId = "kharma.sessionid";
         private const int UploadResponseTimeoutMs = 10000;

@@ -1,6 +1,15 @@
 # Changelog
 All notable changes to this package will be documented in this file.
 
+## [11.2.2] - 2023-02-23
+
+### Validator Changes
+
+- Updated the 'LOD Setup' test to address some issues
+	- Added additional checks for LOD renderers (inactive renderer check, LOD Group reference check, relative hierarchy position to LOD Group check)
+	- LOD Group Component is no longer required to be on the root of the Prefab
+	- Updated the test result message interface when invalid Prefabs are found
+
 ## [11.2.1] - 2023-01-17
 
 ### Uploader Changes
