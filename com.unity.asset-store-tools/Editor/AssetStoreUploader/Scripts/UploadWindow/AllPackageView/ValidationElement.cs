@@ -78,7 +78,7 @@ namespace AssetStoreTools.Uploader
             ValidationState.Instance.SetMainPath(_localPath);
             ValidationState.Instance.SetCategory(_category);
             _validateButton.SetEnabled(false);
-
+            
             _categoryEvaluator = new CategoryEvaluator(_category);
 
             var testsPath = "Packages/com.unity.asset-store-tools/Editor/AssetStoreValidator/Tests";
@@ -112,6 +112,7 @@ namespace AssetStoreTools.Uploader
                 outcomeList.Add(test.Result);
             }
 
+            EditorUtility.UnloadUnusedAssetsImmediate();
             EditorUtility.ClearProgressBar();
 
             EnableInfoBox(true, outcomeList);

@@ -11,6 +11,7 @@ using UnityEngine.TestTools;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using Debug = System.Diagnostics.Debug;
+using AssetStoreTools.Utility.Json;
 
 namespace Tests.Editor
 {
@@ -23,6 +24,8 @@ namespace Tests.Editor
 
         private readonly string[] MultiPackagePathInProject = { "Assets/SmallPackage", "Assets/StreamingAssets", "Assets/WebGLTemplates" };
         private readonly string[] HybridPackagePathInProject = { "Packages/com.hybrid.package" };
+
+        private readonly string[] PackmanDependencies = { "com.unity.ide.visualstudio", "com.unity.ide.vscode" };
 
         private readonly string[] ProjectSettingsExcludeList =
         { 
@@ -286,7 +289,7 @@ namespace Tests.Editor
             var exportPaths = MultiPackagePathInProject;
             var outputPath = Path.Combine(CachePath, "Actual.unitypackage");
 
-            var exportTask = PackageExporter.ExportPackage(exportPaths, outputPath, false, false, false);
+            var exportTask = PackageExporter.ExportPackage(exportPaths, outputPath, false, false, true);
 
             while (!exportTask.IsCompleted)
                 yield return null;
@@ -310,7 +313,7 @@ namespace Tests.Editor
             var exportPaths = MultiPackagePathInProject;
             var outputPath = Path.Combine(CachePath, "Actual.unitypackage");
 
-            var exportTask = PackageExporter.ExportPackage(exportPaths, outputPath, true, true, false);
+            var exportTask = PackageExporter.ExportPackage(exportPaths, outputPath, true, true, true);
 
             while (!exportTask.IsCompleted)
                 yield return null;
@@ -330,81 +333,6 @@ namespace Tests.Editor
 
         [UnityTest]
         public IEnumerator ExportPackage_Native_InvalidPath()
-        {
-            var exportPaths = new string[0];
-            var outputPath = Path.Combine(CachePath, "Actual.unitypackage");
-
-            var exportTask = PackageExporter.ExportPackage(exportPaths, outputPath, false, false, false);
-
-            while (!exportTask.IsCompleted)
-                yield return null;
-
-            var result = exportTask.Result;
-
-            Assert.IsFalse(result.Success);
-
-            exportPaths = new string[] { "This/Path/Does/Not/Exist" };
-
-            exportTask = PackageExporter.ExportPackage(exportPaths, outputPath, false, false, false);
-
-            while (!exportTask.IsCompleted)
-                yield return null;
-
-            result = exportTask.Result;
-
-            Assert.IsFalse(result.Success);
-        }
-
-        [UnityTest]
-        public IEnumerator ExportPackage_Custom_Basic()
-        {
-            var exportPaths = MultiPackagePathInProject;
-            var outputPath = Path.Combine(CachePath, "Actual.unitypackage");
-
-            var exportTask = PackageExporter.ExportPackage(exportPaths, outputPath, false, false, true);
-
-            while (!exportTask.IsCompleted)
-                yield return null;
-
-            var result = exportTask.Result;
-            Assert.IsTrue(result.Success);
-            Assert.IsTrue(File.Exists(outputPath));
-
-            ExtractPackage(MultiPackageReference, out string extractedExpectedPath);
-            ExtractPackage(outputPath, out string extractedActualPath);
-
-            var expectedDir = new DirectoryInfo(extractedExpectedPath);
-            var actualDir = new DirectoryInfo(extractedActualPath);
-
-            CompareFilesInPaths(expectedDir, actualDir, false, false);
-        }
-
-        [UnityTest]
-        public IEnumerator ExportPackage_Custom_ManifestAndProjectSettings()
-        {
-            var exportPaths = MultiPackagePathInProject;
-            var outputPath = Path.Combine(CachePath, "Actual.unitypackage");
-
-            var exportTask = PackageExporter.ExportPackage(exportPaths, outputPath, true, true, true);
-
-            while (!exportTask.IsCompleted)
-                yield return null;
-
-            var result = exportTask.Result;
-            Assert.IsTrue(result.Success);
-            Assert.IsTrue(File.Exists(outputPath));
-
-           ExtractPackage(MultiPackageReference, out string extractedExpectedPath);
-           ExtractPackage(outputPath, out string extractedActualPath);
-
-            var expectedDir = new DirectoryInfo(extractedExpectedPath);
-            var actualDir = new DirectoryInfo(extractedActualPath);
-
-            CompareFilesInPaths(expectedDir, actualDir, true, true);
-        }
-
-        [UnityTest]
-        public IEnumerator ExportPackage_Custom_InvalidPath()
         {
             var exportPaths = new string[0];
             var outputPath = Path.Combine(CachePath, "Actual.unitypackage");
@@ -431,12 +359,94 @@ namespace Tests.Editor
         }
 
         [UnityTest]
+        public IEnumerator ExportPackage_Custom_Basic()
+        {
+            var exportPaths = MultiPackagePathInProject;
+            var outputPath = Path.Combine(CachePath, "Actual.unitypackage");
+
+            var exportTask = PackageExporter.ExportPackage(exportPaths, outputPath, false, false, false);
+
+            while (!exportTask.IsCompleted)
+                yield return null;
+
+            var result = exportTask.Result;
+            Assert.IsTrue(result.Success);
+            Assert.IsTrue(File.Exists(outputPath));
+
+            ExtractPackage(MultiPackageReference, out string extractedExpectedPath);
+            ExtractPackage(outputPath, out string extractedActualPath);
+
+            var expectedDir = new DirectoryInfo(extractedExpectedPath);
+            var actualDir = new DirectoryInfo(extractedActualPath);
+
+            CompareFilesInPaths(expectedDir, actualDir, false, false);
+        }
+
+        [UnityTest]
+        public IEnumerator ExportPackage_Custom_ManifestAndProjectSettings()
+        {
+            var exportPaths = MultiPackagePathInProject;
+            var outputPath = Path.Combine(CachePath, "Actual.unitypackage");
+
+            var exportTask = PackageExporter.ExportPackage(exportPaths, outputPath, true, true, false, PackmanDependencies);
+
+            while (!exportTask.IsCompleted)
+                yield return null;
+
+            var result = exportTask.Result;
+            Assert.IsTrue(result.Success);
+            Assert.IsTrue(File.Exists(outputPath));
+
+           ExtractPackage(MultiPackageReference, out string extractedExpectedPath);
+           ExtractPackage(outputPath, out string extractedActualPath);
+
+            var expectedDir = new DirectoryInfo(extractedExpectedPath);
+            var actualDir = new DirectoryInfo(extractedActualPath);
+
+            CompareFilesInPaths(expectedDir, actualDir, true, true);
+
+            var manifestFileText = File.ReadAllText($"{actualDir.FullName}/packagemanagermanifest/asset");
+            var manifestFileJson = JSONParser.SimpleParse(manifestFileText);
+            var actualDependencies = manifestFileJson["dependencies"].AsDict();
+            Assert.AreEqual(2, actualDependencies.Count, "Dependency count in created package does not match the expected count");
+            foreach (var d in PackmanDependencies)
+                Assert.IsTrue(actualDependencies.ContainsKey(d));
+        }
+
+        [UnityTest]
+        public IEnumerator ExportPackage_Custom_InvalidPath()
+        {
+            var exportPaths = new string[0];
+            var outputPath = Path.Combine(CachePath, "Actual.unitypackage");
+
+            var exportTask = PackageExporter.ExportPackage(exportPaths, outputPath, false, false, false);
+
+            while (!exportTask.IsCompleted)
+                yield return null;
+
+            var result = exportTask.Result;
+
+            Assert.IsFalse(result.Success);
+
+            exportPaths = new string[] { "This/Path/Does/Not/Exist" };
+
+            exportTask = PackageExporter.ExportPackage(exportPaths, outputPath, false, false, false);
+
+            while (!exportTask.IsCompleted)
+                yield return null;
+
+            result = exportTask.Result;
+
+            Assert.IsFalse(result.Success);
+        }
+
+        [UnityTest]
         public IEnumerator ExportPackage_Custom_Hybrid()
         {
             var exportPaths = HybridPackagePathInProject;
             var outputPath = Path.Combine(CachePath, "Actual.unitypackage");
 
-            var exportTask = PackageExporter.ExportPackage(exportPaths, outputPath, false, false, true);
+            var exportTask = PackageExporter.ExportPackage(exportPaths, outputPath, false, false, false);
 
             while (!exportTask.IsCompleted)
                 yield return null;

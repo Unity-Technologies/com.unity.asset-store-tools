@@ -19,10 +19,8 @@ namespace Tests.Editor
         private readonly string Username = Environment.GetEnvironmentVariable("AST_USERNAME");
         private readonly string Password = Environment.GetEnvironmentVariable("AST_PASSWORD");
 
-        private readonly string PackageId = "227403";
-
-        private readonly string VersionId = "719827";
-        private readonly string VersionIdAlt = "719999";
+        private readonly string PackageId1 = "238810"; // ASTools Automated Test Draft 1
+        private readonly string PackageId2 = "238811"; // ASTools Automated Test Draft 2
 
         private const string SmallPackageReference = "Assets/Tests/Resources/SmallPackage.unitypackage";
         private const string LargePackageReference = "Assets/Tests/Resources/LargePackage.unitypackage";
@@ -52,18 +50,15 @@ namespace Tests.Editor
             }
         }
 
-        [TearDown]
-        public void Teardown()
+        [UnityTearDown]
+        public IEnumerator Teardown()
         {
             if (AssetStoreAPI.IsUploading)
             {
                 AssetStoreAPI.AbortUploadTasks();
-                while(AssetStoreAPI.IsUploading)
-                    Thread.Sleep(10);
+                yield return new WaitUntil(() => !AssetStoreAPI.IsUploading);
             }
         }
-
-        private bool UploadTaskComplete(Task task) => (task.IsCompleted || task.IsCanceled || task.IsFaulted);
 
         private string SelectPackageToUpload(string existingPackageSize)
         {
@@ -93,6 +88,20 @@ namespace Tests.Editor
                 generated += source[random.Next(0, source.Length)];
             }
             return generated;
+        }
+
+        private async Task<string> GetLatestVersionId(string packageId)
+        {
+            var result = await AssetStoreAPI.GetFullPackageDataAsync(true);
+            Assert.IsTrue(result.Success);
+
+            var data = result.Response;
+            var packages = data["packages"].AsDict();
+
+            if (!packages.ContainsKey(packageId))
+                Assert.Fail($"Package ID {packageId} was not found in the list of packages");
+
+            return packages[packageId]["id"];
         }
 
         private async Task<UploadInfo> GetLastUploadTimestamp(string versionId)
@@ -160,19 +169,12 @@ namespace Tests.Editor
         [UnityTest]
         public IEnumerator UploadPackage()
         {
-            JsonValue packageData = new JsonValue();
-            var dataTask = AssetStoreAPI.GetFullPackageDataAsync(false);
-            while (!dataTask.IsCompleted)
+            var versionIdTask = GetLatestVersionId(PackageId1);
+            while (!versionIdTask.IsCompleted)
                 yield return null;
+            var versionId = versionIdTask.Result;
 
-            var result = dataTask.Result;
-            Assert.IsTrue(result.Success);
-            packageData = result.Response;
-
-            //var originalSize = package["extra_info"]["size"].IsString() ? package["extra_info"]["size"].AsString() : string.Empty;
-            //var originalModified = package["extra_info"]["modified"].AsString();
-
-            var timestampTask = GetLastUploadTimestamp(VersionId);
+            var timestampTask = GetLastUploadTimestamp(versionId);
             while (!timestampTask.IsCompleted)
                 yield return null;
 
@@ -192,9 +194,9 @@ namespace Tests.Editor
 
             Assert.IsFalse(AssetStoreAPI.IsUploading, "AssetStoreAPI is uploading before the test even started");
 
-            var uploadTask = AssetStoreAPI.UploadPackageAsync(VersionId, "TestPackage", packagePath, localPackageGuid, localPackagePath, localProjectPath);
+            var uploadTask = AssetStoreAPI.UploadPackageAsync(versionId, "TestPackage", packagePath, localPackageGuid, localPackagePath, localProjectPath);
 
-            while (!UploadTaskComplete(uploadTask))
+            while (!uploadTask.IsCompleted)
                 yield return null;
 
             Assert.IsTrue(uploadTask.Status == TaskStatus.RanToCompletion, "Upload task has not completed successfully");
@@ -202,9 +204,9 @@ namespace Tests.Editor
 
             var uploadResult = uploadTask.Result;
 
-            Assert.AreEqual(PackageUploadResult.UploadStatus.Success, uploadResult.Status, result.Error?.Message);
+            Assert.AreEqual(PackageUploadResult.UploadStatus.Success, uploadResult.Status, "Package upload result is not a success");
 
-            timestampTask = GetLastUploadTimestamp(VersionId);
+            timestampTask = GetLastUploadTimestamp(versionId);
 
             while (!timestampTask.IsCompleted)
                 yield return null;
@@ -215,14 +217,14 @@ namespace Tests.Editor
             Assert.AreNotEqual(originalTimestamp, timestampTask.Result.Timestamp, "Modified date before and after upload has not changed");
             Assert.AreNotEqual(originalSize, timestampTask.Result.Size, "Size before and after upload has not changed");
 
-            dataTask = AssetStoreAPI.GetFullPackageDataAsync(false);
+            var dataTask = AssetStoreAPI.GetFullPackageDataAsync(false);
 
             while (!dataTask.IsCompleted)
                 yield return null;
 
             Assert.IsTrue(dataTask.Result.Success);
 
-            var package = dataTask.Result.Response["packages"][PackageId];
+            var package = dataTask.Result.Response["packages"][PackageId1];
             var newLocalPackageGuid = package["root_guid"].AsString();
             var newLocalPackagePath = package["root_path"].AsString();
             var newLocalProjectPath = package["project_path"].AsString();
@@ -233,6 +235,35 @@ namespace Tests.Editor
             Assert.AreEqual(localProjectPath, newLocalProjectPath, "Local Project Path does not match the expected one");
         }
 
+
+        [UnityTest]
+        public IEnumerator UploadMultiplePackages()
+        {
+            var versionIdTask = GetLatestVersionId(PackageId1);
+            while (!versionIdTask.IsCompleted)
+                yield return null;
+            var versionId1 = versionIdTask.Result;
+
+            versionIdTask = GetLatestVersionId(PackageId2);
+            while (!versionIdTask.IsCompleted)
+                yield return null;
+            var versionId2 = versionIdTask.Result;
+
+            var uploadTask1 = AssetStoreAPI.UploadPackageAsync(versionId1, "TestPackage1", MultiPackageReference, string.Empty, string.Empty, string.Empty);
+            var uploadTask2 = AssetStoreAPI.UploadPackageAsync(versionId2, "TestPackage2", MultiPackageReference, string.Empty, string.Empty, string.Empty);
+
+            while (!uploadTask1.IsCompleted)
+                yield return null;
+
+            while (!uploadTask2.IsCompleted)
+                yield return null;
+
+
+            Assert.AreEqual(PackageUploadResult.UploadStatus.Success, uploadTask1.Result.Status, "Package 1 did not upload successfully");
+            Assert.AreEqual(PackageUploadResult.UploadStatus.Success, uploadTask2.Result.Status, "Package 2 did not upload successfully");
+            Assert.IsFalse(AssetStoreAPI.IsUploading);
+        }
+
         [UnityTest]
         public IEnumerator AbortSingleUpload()
         {
@@ -240,13 +271,18 @@ namespace Tests.Editor
 
             Assert.IsFalse(AssetStoreAPI.IsUploading, "AssetStoreAPI is uploading before the test even started");
 
-            var uploadTask = AssetStoreAPI.UploadPackageAsync(VersionId, "TestPackage", packagePath, "", "", "");
-            while (!AssetStoreAPI.ActiveUploads.ContainsKey(VersionId))
+            var versionIdTask = GetLatestVersionId(PackageId1);
+            while (!versionIdTask.IsCompleted)
+                yield return null;
+            var versionId = versionIdTask.Result;
+
+            var uploadTask = AssetStoreAPI.UploadPackageAsync(versionId, "TestPackage", packagePath, "", "", "");
+            while (!AssetStoreAPI.ActiveUploads.ContainsKey(versionId))
                 yield return null;
 
-            AssetStoreAPI.AbortPackageUpload(VersionId);
+            AssetStoreAPI.AbortPackageUpload(versionId);
 
-            while (!UploadTaskComplete(uploadTask))
+            while (!uploadTask.IsCompleted)
                 yield return null;
 
             var uploadResult = uploadTask.Result.Status;
@@ -259,29 +295,36 @@ namespace Tests.Editor
         public IEnumerator AbortAllUploads()
         {
             var packagePathA = LargePackageReference;
-            var packagePathB = MultiPackageReference;
+            var packagePathB = LargePackageReference;
 
             Assert.IsFalse(AssetStoreAPI.IsUploading);
 
-            var uploadTask1 = AssetStoreAPI.UploadPackageAsync(VersionId, "TestPackage1", packagePathA, String.Empty, String.Empty, String.Empty);
-            Thread.Sleep(150); // Sleeping between two upload tasks avoid deadlock
-            var uploadTask2 = AssetStoreAPI.UploadPackageAsync(VersionIdAlt, "TestPackage2", packagePathB, String.Empty, String.Empty, String.Empty);
-            Thread.Sleep(150); // Sleeping between two upload tasks avoid deadlock
-            
-            while (!AssetStoreAPI.ActiveUploads.ContainsKey(VersionId) && !AssetStoreAPI.ActiveUploads.ContainsKey(VersionIdAlt))
+            var versionIdTask = GetLatestVersionId(PackageId1);
+            while (!versionIdTask.IsCompleted)
                 yield return null;
-            
-            AssetStoreAPI.AbortPackageUpload(VersionId);
-            AssetStoreAPI.AbortPackageUpload(VersionIdAlt);
+            var versionId1 = versionIdTask.Result;
 
-            while (!UploadTaskComplete(uploadTask1) && !UploadTaskComplete(uploadTask2))
+            versionIdTask = GetLatestVersionId(PackageId2);
+            while (!versionIdTask.IsCompleted)
+                yield return null;
+            var versionId2 = versionIdTask.Result;
+
+            var uploadTask1 = AssetStoreAPI.UploadPackageAsync(versionId1, "TestPackage1", packagePathA, String.Empty, String.Empty, String.Empty);
+            var uploadTask2 = AssetStoreAPI.UploadPackageAsync(versionId2, "TestPackage2", packagePathB, String.Empty, String.Empty, String.Empty);
+
+            while (!AssetStoreAPI.ActiveUploads.ContainsKey(versionId1) && !AssetStoreAPI.ActiveUploads.ContainsKey(versionId2))
                 yield return null;
 
-            var uploadResult1 = uploadTask1.Result.Status;
-            var uploadResult2 = uploadTask2.Result.Status;
+            AssetStoreAPI.AbortUploadTasks();
 
-            Assert.AreEqual(PackageUploadResult.UploadStatus.Cancelled, uploadResult1, "Upload result 1 did not return appropriate Cancel status");
-            Assert.AreEqual(PackageUploadResult.UploadStatus.Cancelled, uploadResult2, "Upload result 2 did not return appropriate Cancel status");
+            while (!uploadTask1.IsCompleted)
+                yield return null;
+
+            while (!uploadTask2.IsCompleted)
+                yield return null;
+
+            Assert.AreEqual(PackageUploadResult.UploadStatus.Cancelled, uploadTask1.Result.Status, "Upload result 1 did not return appropriate Cancel status");
+            Assert.AreEqual(PackageUploadResult.UploadStatus.Cancelled, uploadTask2.Result.Status, "Upload result 2 did not return appropriate Cancel status");
             Assert.IsFalse(AssetStoreAPI.IsUploading, "AssetStoreAPI is still uploading after canceling all tasks");
         }
     }

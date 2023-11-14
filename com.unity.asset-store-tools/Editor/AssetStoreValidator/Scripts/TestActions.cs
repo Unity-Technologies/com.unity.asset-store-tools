@@ -636,13 +636,13 @@ namespace AssetStoreTools.Validator
         private GameObject[] GetAllAssetsWithMissingComponents()
         {
             var missingReferenceAssets = new List<GameObject>();
-            var assetPaths = AssetDatabase.GetAllAssetPaths().Where(p => p.StartsWith(s_mainFolderPath));
+            var prefabObjects = GetObjectsFromAssets(FileType.Prefab);
 
-            foreach (var path in assetPaths)
+            foreach (var po in prefabObjects)
             {
-                var asset = AssetDatabase.LoadAssetAtPath<GameObject>(path);
-                if (asset != null && IsMissingReference(asset))
-                    missingReferenceAssets.Add(asset);
+                var p = po as GameObject;
+                if (p != null && IsMissingReference(p))
+                    missingReferenceAssets.Add(p);
             }
 
             return missingReferenceAssets.ToArray();
