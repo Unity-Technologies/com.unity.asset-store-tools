@@ -2,6 +2,7 @@ using AssetStoreTools.Utility.Json;
 using AssetStoreTools.Validator.Data;
 using AssetStoreTools.Validator.TestDefinitions;
 using AssetStoreTools.Validator.TestMethods.Utility;
+using System;
 using System.IO;
 using System.Linq;
 using UnityEngine;
@@ -82,6 +83,14 @@ namespace AssetStoreTools.Validator.TestMethods
 
         private bool CanBeDemoScene(string scenePath)
         {
+            // Check skybox
+            var sceneSkyboxPath = AssetUtility.ObjectToAssetPath(RenderSettings.skybox).Replace("\\", "").Replace("/", "");
+            var defaultSkyboxPath = "Resources/unity_builtin_extra".Replace("\\", "").Replace("/", "");
+
+            if (!sceneSkyboxPath.Equals(defaultSkyboxPath, StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            // Check GameObjects
             SceneUtility.OpenScene(scenePath);
             var rootObjects = SceneUtility.GetRootGameObjects();
             var count = rootObjects.Length;

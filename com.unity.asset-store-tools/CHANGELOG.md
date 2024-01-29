@@ -1,6 +1,25 @@
 # Changelog
 All notable changes to this package will be documented in this file.
 
+## [11.4.0] - 2024-01-23
+
+### Uploader Changes
+- Added prevention of uploading packages larger than 6 GB
+- Added a prompt to allow automatically generating meta files within hidden folders
+- Fixed some obsolete API usage warnings in newer Unity versions
+
+### Validator Changes
+- Added validation tests for:
+    - Animation Clip take names
+	- Model import logs
+	- Uncompressed Package size
+- Updated the fail severity of Audio Clipping validation test
+- Updated the Demo Scene test to treat default scenes with custom skyboxes as valid demo scenes
+- Fixed some obsolete API usage warnings in newer Unity versions
+
+### Other
+- Added an option to check for Asset Store Publishing Tools updates
+
 ## [11.3.1] - 2023-08-14
 
 ### Uploader Changes

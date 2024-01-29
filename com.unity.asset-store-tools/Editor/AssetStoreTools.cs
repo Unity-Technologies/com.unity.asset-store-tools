@@ -44,6 +44,13 @@ namespace AssetStoreTools
             Application.OpenURL("https://forum.unity.com/threads/new-asset-store-tools-version-coming-july-20th-2022.1310939/");
         }
 
+        [MenuItem("Asset Store Tools/Check for Updates", false, 45)]
+        public static void OpenUpdateChecker()
+        {
+            var wnd = GetWindowWithRect<ASToolsUpdater>(new Rect(Screen.width / 2, Screen.height / 2, 400, 150), true);
+            wnd.Show();
+        }
+
         [MenuItem("Asset Store Tools/Settings", false, 50)]
         public static void OpenSettings()
         {
