@@ -1,4 +1,5 @@
 using AssetStoreTools.Previews.UI.Data;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -64,8 +65,19 @@ namespace AssetStoreTools.Previews.UI.Elements
         {
             _assetPreview = assetPreview;
             _assetPreview.LoadImage(SetImage);
-            _label.text = _assetPreview.Asset.name;
-            tooltip = _assetPreview.GetAssetPath();
+
+            var assetPath = _assetPreview.GetAssetPath();
+
+            if (string.IsNullOrEmpty(assetPath))
+            {
+                _label.text = "[Missing]";
+                tooltip = "This asset has been deleted";
+                return;
+            }
+
+            var assetNameWithExtension = assetPath.Split('/').Last();
+            _label.text = assetNameWithExtension;
+            tooltip = assetPath;
         }
     }
 }

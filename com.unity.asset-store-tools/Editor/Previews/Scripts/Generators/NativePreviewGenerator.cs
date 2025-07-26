@@ -159,7 +159,8 @@ namespace AssetStoreTools.Previews.Generators
                 case Tile _:
                     return true;
                 case GameObject go:
-                    return go.GetComponentsInChildren<MeshRenderer>().Length > 0;
+                    var renderers = go.GetComponentsInChildren<Renderer>();
+                    return renderers != null && renderers.Length > 0;
                 default:
                     return false;
             }

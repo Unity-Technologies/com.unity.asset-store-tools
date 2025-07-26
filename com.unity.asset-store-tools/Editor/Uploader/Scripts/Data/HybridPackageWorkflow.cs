@@ -109,10 +109,12 @@ namespace AssetStoreTools.Uploader.Data
 
         public override IEnumerable<string> GetAllPaths()
         {
-            var paths = new List<string>()
-            {
-                _packageInfo.assetPath
-            };
+            var paths = new List<string>();
+
+            if (_packageInfo == null)
+                return paths;
+
+            paths.Add(_packageInfo.assetPath);
             paths.AddRange(_dependencies.Select(x => x.assetPath));
 
             return paths;

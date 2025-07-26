@@ -3,6 +3,8 @@ using AssetStoreTools.Previews.UI.Data;
 using System.Linq;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.Events;
+using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
 
 namespace AssetStoreTools.Previews.UI.Elements
@@ -26,7 +28,7 @@ namespace AssetStoreTools.Previews.UI.Elements
             Create();
             RefreshList();
 
-            EditorSceneManager.activeSceneChangedInEditMode += (_, __) => RefreshList();
+            SubscribeToSceneChanges();
         }
 
         private void Create()
@@ -87,6 +89,27 @@ namespace AssetStoreTools.Previews.UI.Elements
                     return "high resolution";
                 default:
                     return type.ToString().ToLower();
+            }
+        }
+
+        private void SubscribeToSceneChanges()
+        {
+            var windowToSubscribeTo = Resources.FindObjectsOfTypeAll<PreviewGeneratorWindow>().FirstOrDefault();
+            UnityAction<Scene, Scene> sceneChanged = null;
+            sceneChanged = new UnityAction<Scene, Scene>((_, __) => RefreshObjects(windowToSubscribeTo));
+            EditorSceneManager.activeSceneChangedInEditMode += sceneChanged;
+
+            void RefreshObjects(PreviewGeneratorWindow subscribedWindow)
+            {
+                // Remove callback if preview generator window instance changed
+                var activeWindow = Resources.FindObjectsOfTypeAll<PreviewGeneratorWindow>().FirstOrDefault();
+                if (subscribedWindow == null || subscribedWindow != activeWindow)
+                {
+                    EditorSceneManager.activeSceneChangedInEditMode -= sceneChanged;
+                    return;
+                }
+
+                RefreshList();
             }
         }
     }

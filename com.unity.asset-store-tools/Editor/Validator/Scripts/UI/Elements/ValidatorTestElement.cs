@@ -223,7 +223,7 @@ namespace AssetStoreTools.Validator.UI.Elements
             {
                 // Remove callback if validator window instance changed
                 var activeWindow = Resources.FindObjectsOfTypeAll<ValidatorWindow>().FirstOrDefault();
-                if (subscribedWindow != activeWindow)
+                if (subscribedWindow == null || subscribedWindow != activeWindow)
                 {
                     EditorSceneManager.activeSceneChangedInEditMode -= sceneChanged;
                     return;

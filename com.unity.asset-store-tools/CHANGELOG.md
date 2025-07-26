@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to this package will be documented in this file.
 
+## [12.0.1] - 2025-01-16
+
+### Preview Generator changes
+- Updated generated preview collection UI to display the asset extension
+- Fixed an issue with some prefab and model asset types not generating previews
+- Fixed an error that could occur when changing scenes after deleting a preview source asset
+
 ## [12.0.0] - 2025-01-13
 
 ### General changes
